@@ -12,36 +12,52 @@ public class Batalhanaval {
     static final char ACERTARTIRO = '0';
     static final char ERRARTIRO = ' ';
     static final int[] TAMANHOBARCO = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
-    
+
     Scanner ler = new Scanner(System.in);
     Random aleatorio = new Random();
 
     char[][] mapajogador1;
     char[][] mapajogador2;
+    char[][] mapaAtaquesJogador1;
+    char[][] mapaAtaquesJogador2;
     boolean contraComputador;
 
     public Batalhanaval() {
         mapajogador1 = new char[TAMANHOMAPA][TAMANHOMAPA];
         mapajogador2 = new char[TAMANHOMAPA][TAMANHOMAPA];
+        mapaAtaquesJogador1 = new char[TAMANHOMAPA][TAMANHOMAPA];
+        mapaAtaquesJogador2 = new char[TAMANHOMAPA][TAMANHOMAPA];
         for (char[] linha : mapajogador1) {
             Arrays.fill(linha, AGUA);
         }
         for (char[] linha : mapajogador2) {
             Arrays.fill(linha, AGUA);
         }
+        for (char[] linha : mapaAtaquesJogador1) {
+            Arrays.fill(linha, AGUA);
+        }
+        for (char[] linha : mapaAtaquesJogador2) {
+            Arrays.fill(linha, AGUA);
+        }
     }
 
     public void iniciarJogo() {
-        System.out.println("Bem-vindo ao jogo Batalha Naval do FDS!");
-        definirModoJogo();
-        alocarBarcos(mapajogador1);
-        if (contraComputador) {
-            alocarBarcosComputador(mapajogador2);
-        } else {
-            alocarBarcos(mapajogador2);
-        }
+    System.out.println("Bem-vindo ao jogo Batalha Naval do FDS!");
+    definirModoJogo();
+    alocarBarcos(mapajogador1);
+    if (contraComputador) {
+        alocarBarcosComputador(mapajogador2);
+    } else {
+        alocarBarcos(mapajogador2);
+    }
+    if (contraComputador) {
+        jogarContraPC();
+    } else {
         jogar();
     }
+    exibirMapaAtaques(mapajogador1);
+    exibirMapaAtaques(mapajogador2);
+}
 
     private void definirModoJogo() {
         System.out.println("Escolha o modo de jogo:");
@@ -63,7 +79,7 @@ public class Batalhanaval {
 
     private void alocarBarcos(char[][] mapa) {
         for (int tamanho : TAMANHOBARCO) {
-            exibirMapa(mapa);
+            exibirMapa(mapa, true);
             System.out.println("Aloque um barco de tamanho " + tamanho + ".");
             boolean alocado = false;
 
@@ -137,41 +153,101 @@ public class Batalhanaval {
         char[][] mapaDefesa;
         String jogador;
         if (turnoJogador1) {
-            mapaAtaque = mapajogador1;
-            mapaDefesa = mapajogador2;
-            jogador = "Jogador 1";
-            exibirMapa(mapajogador1);  // Exibe o mapa do Jogador 1
-        } else {
             mapaAtaque = mapajogador2;
             mapaDefesa = mapajogador1;
-            jogador = (contraComputador) ? "Computador" : "Jogador 2";
-            exibirMapa(mapajogador2);  // Exibe o mapa do Jogador 2
+            jogador = "Jogador 1";
+        } else {
+            mapaAtaque = mapajogador1;
+            mapaDefesa = mapajogador2;
+            jogador = "Jogador 2";
         }
+
+        exibirMapa(mapajogador1, true);  // Exibe o mapa do jogador 1 com os barcos
+        exibirMapa(mapaAtaque, false); // Exibe o mapa de ataque do jogador
 
         System.out.println(jogador + ", é sua vez de atacar.");
         System.out.println("Informe a posição do ataque (linha coluna):");
         int linha = lerInteiroEntre(0, TAMANHOMAPA - 1);
         int coluna = lerInteiroEntre(0, TAMANHOMAPA - 1);
 
-        if (mapaDefesa[linha][coluna] == BARQUINHO) {
-            mapaDefesa[linha][coluna] = ACERTARTIRO;
+        if (mapaAtaque[linha][coluna] == AGUA) {
+            mapaAtaque[linha][coluna] = ERRARTIRO;
+            System.out.println("Você acertou na água!");
+            turnoJogador1 = !turnoJogador1;
+        } else if (mapaAtaque[linha][coluna] == BARQUINHO) {
             mapaAtaque[linha][coluna] = ACERTARTIRO;
             System.out.println("Você acertou um navio!");
+
             if (verificarFimJogo(mapaDefesa)) {
                 jogoAcabou = true;
                 System.out.println(jogador + " venceu o jogo!");
             }
-        } else if (mapaDefesa[linha][coluna] == AGUA) {
-            mapaDefesa[linha][coluna] = ERRARTIRO;
-            mapaAtaque[linha][coluna] = ERRARTIRO;
-            System.out.println("Você acertou na água!");
-            turnoJogador1 = !turnoJogador1;
-        } else {
+        } else if (mapaAtaque[linha][coluna] == ACERTARTIRO || mapaAtaque[linha][coluna] == ERRARTIRO) {
             System.out.println("Você já atirou nessa posição. Tente novamente.");
         }
 
-        if (!jogoAcabou && contraComputador && !turnoJogador1) {
-            realizarAtaqueComputador();
+        if (!jogoAcabou && !turnoJogador1) {
+            exibirMapa(mapajogador2, false);  // Exibe o mapa do jogador 2 sem mostrar os barcos
+        }
+    }
+}
+
+
+   private void jogarContraPC() {
+    boolean jogoAcabou = false;
+    boolean turnoJogador1 = true;
+
+    while (!jogoAcabou) {
+        char[][] mapaAtaque;
+        char[][] mapaDefesa;
+        String jogador;
+        if (turnoJogador1) {
+            mapaAtaque = mapajogador2;
+            mapaDefesa = mapajogador1;
+            jogador = "Jogador 1";
+        } else {
+            mapaAtaque = mapajogador1;
+            mapaDefesa = mapajogador2;
+            jogador = "Computador";
+        }
+
+        exibirMapa(mapajogador1, true);  // Exibe o mapa do jogador 1 com os barcos
+        exibirMapa(mapaAtaque, false); // Exibe o mapa de ataque do jogador
+
+        System.out.println(jogador + ", é sua vez de atacar.");
+        System.out.println("Informe a posição do ataque (linha coluna):");
+        int linha, coluna;
+
+        if (turnoJogador1) {
+            linha = lerInteiroEntre(0, TAMANHOMAPA - 1);
+            coluna = lerInteiroEntre(0, TAMANHOMAPA - 1);
+        } else {
+            linha = aleatorio.nextInt(TAMANHOMAPA);
+            coluna = aleatorio.nextInt(TAMANHOMAPA);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+        }
+
+        if (mapaAtaque[linha][coluna] == AGUA) {
+            mapaAtaque[linha][coluna] = ERRARTIRO;
+            System.out.println("Você acertou na água!");
+            turnoJogador1 = !turnoJogador1;
+        } else if (mapaAtaque[linha][coluna] == BARQUINHO) {
+            mapaAtaque[linha][coluna] = ACERTARTIRO;
+            System.out.println("Você acertou um navio!");
+
+            if (verificarFimJogo(mapaDefesa)) {
+                jogoAcabou = true;
+                System.out.println(jogador + " venceu o jogo!");
+            }
+        } else if (mapaAtaque[linha][coluna] == ACERTARTIRO || mapaAtaque[linha][coluna] == ERRARTIRO) {
+            System.out.println("Você já atirou nessa posição. Tente novamente.");
+        }
+
+        if (!jogoAcabou && !turnoJogador1) {
+            exibirMapa(mapajogador2, false);  // Exibe o mapa do jogador 2 sem mostrar os barcos
         }
     }
 }
@@ -191,14 +267,9 @@ public class Batalhanaval {
 
         if (mapajogador1[linha][coluna] == BARQUINHO) {
             mapajogador1[linha][coluna] = ACERTARTIRO;
-            mapajogador2[linha][coluna] = ACERTARTIRO;
             System.out.println("O computador acertou um navio!");
-            if (verificarFimJogo(mapajogador1)) {
-                System.out.println("O computador venceu o jogo!");
-            }
         } else {
             mapajogador1[linha][coluna] = ERRARTIRO;
-            mapajogador2[linha][coluna] = ERRARTIRO;
             System.out.println("O computador acertou na água!");
         }
     }
@@ -213,23 +284,53 @@ public class Batalhanaval {
         }
         return true;
     }
+    
+    private void exibirMapaAtaques(char[][] mapaAtaques) {
+    int il = 0;
+    int ic = 0;
 
-    private void exibirMapa(char[][] mapa) {
+    System.out.println("Mapa de Ataques:");
+
+    System.out.print("  ");
+    for (ic = 0; ic < 10; ic++) {
+        System.out.printf("%d ", ic);
+    }
+    System.out.println();
+
+    for (char[] linha : mapaAtaques) {
+        System.out.printf("%d ", il++);
+        for (char celula : linha) {
+            if (celula == ACERTARTIRO || celula == ERRARTIRO) {
+                System.out.print(celula + " ");
+            } else {
+                System.out.print(AGUA + " ");
+            }
+        }
+        System.out.println();
+    }
+    System.out.println();
+}
+
+    private void exibirMapa(char[][] mapa, boolean mostrarBarcos) {
         int il = 0;
         int ic = 0;
-        
+
         System.out.println("Mapa:");
-        
+
         System.out.print("  ");
-        for (ic = 0; ic < 10; ic++){
-            System.out.printf("%d ",ic);
+        for (ic = 0; ic < 10; ic++) {
+            System.out.printf("%d ", ic);
         }
-        System.out.println("");
-        
+        System.out.println();
+
         for (char[] linha : mapa) {
-            System.out.printf( "%d ",il++);
+            System.out.printf("%d ", il++);
             for (char celula : linha) {
-                System.out.print(celula + " ");
+                if (mostrarBarcos || celula == ACERTARTIRO || celula == ERRARTIRO) {
+                    System.out.print(celula + " ");
+                } else {
+                    System.out.print(AGUA + " ");
+                }
             }
             System.out.println();
         }
@@ -240,8 +341,8 @@ public class Batalhanaval {
         int valor;
         do {
             System.out.print("Escolha uma opção: ");
-            while(!ler.hasNextInt()){
-                System.out.print("Escolha um caracter valido!!!");
+            while (!ler.hasNextInt()) {
+                System.out.print("Escolha um número válido: ");
                 ler.next();
             }
             valor = ler.nextInt();
@@ -253,4 +354,5 @@ public class Batalhanaval {
         Batalhanaval jogo = new Batalhanaval();
         jogo.iniciarJogo();
     }
+    
 }
